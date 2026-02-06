@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arknights: Endfield — Operations Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;500;600;700;800&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+
+:root{--transition-theme:background 0.35s,color 0.35s,border-color 0.35s,box-shadow 0.35s}
+
+[data-theme="light"]{
+  --bg-base:#e9e7e2;
+  --bg-surface:#f2f0ec;
+  --bg-card:#ffffff;
+  --bg-card-hover:#fafaf8;
+  --bg-header:rgba(233,231,226,0.92);
+  --border-light:#d4d0c8;
+  --border-medium:#bfb9ad;
+  --border-strong:#a09888;
+  --accent-yellow:#d4b820;
+  --accent-yellow-bright:#ffd900;
+  --accent-yellow-dim:#b89c18;
+  --accent-yellow-bg:rgba(212,184,32,0.08);
+  --accent-yellow-bg-hover:rgba(212,184,32,0.15);
+  --accent-dark:#1a1a1a;
+  --accent-blue:#0a0a0a;
+  --accent-green:#4a8c5c;
+  --accent-orange:#c47a20;
+  --text-primary:#0a0a0a;
+  --text-secondary:#0a0a0a;
+  --text-dim:#0a0a0a;
+  --text-muted:#0a0a0a;
+  --crosshair-color:rgba(180,170,140,0.35);
+  --dot-color:rgba(180,170,140,0.2);
+  --shadow-card:0 1px 3px rgba(0,0,0,0.04);
+  --shadow-card-hover:0 2px 8px rgba(0,0,0,0.07);
+  --scrollbar-thumb:#ccc8be;
+  --scrollbar-track:var(--bg-base);
+}
+
+[data-theme="dark"]{
+  --bg-base:#000000;
+  --bg-surface:#070707;
+  --bg-card:#0e0e0e;
+  --bg-card-hover:#151515;
+  --bg-header:rgba(0,0,0,0.94);
+  --border-light:#1a1a1a;
+  --border-medium:#252525;
+  --border-strong:#333333;
+  --accent-yellow:#e8c820;
+  --accent-yellow-bright:#ffd900;
+  --accent-yellow-dim:#a89020;
+  --accent-yellow-bg:rgba(232,200,32,0.06);
+  --accent-yellow-bg-hover:rgba(232,200,32,0.12);
+  --accent-dark:#d0d0d0;
+  --accent-blue:#b0b0b0;
+  --accent-green:#5cb870;
+  --accent-orange:#e09438;
+  --text-primary:#e0e0e0;
+  --text-secondary:#c8c8c8;
+  --text-dim:#a0a0a0;
+  --text-muted:#606060;
+  --crosshair-color:rgba(232,200,32,0.06);
+  --dot-color:rgba(255,255,255,0.025);
+  --shadow-card:0 1px 4px rgba(0,0,0,0.4);
+  --shadow-card-hover:0 3px 12px rgba(0,0,0,0.5);
+  --scrollbar-thumb:#222222;
+  --scrollbar-track:#000000;
+}
+
+html{font-size:15px;scroll-behavior:smooth}
+body{
+  background:var(--bg-base);color:var(--text-primary);
+  font-family:'Barlow',sans-serif;min-height:100vh;overflow-x:hidden;
+  transition:var(--transition-theme);
+}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--scrollbar-track)}
+::-webkit-scrollbar-thumb{background:var(--scrollbar-thumb);border-radius:3px}
+
+/* DOT GRID */
+body::after{
+  content:'';position:fixed;top:0;left:0;width:100%;height:100%;
+  background-image:radial-gradient(circle,var(--dot-color) 1px,transparent 1px);
+  background-size:28px 28px;pointer-events:none;z-index:0;
+  transition:var(--transition-theme);
+}
+
+/* CROSSHAIRS */
+.crosshair{position:fixed;pointer-events:none;z-index:1;width:18px;height:18px;opacity:0.6}
+.crosshair::before,.crosshair::after{content:'';position:absolute;background:var(--crosshair-color)}
+.crosshair::before{width:100%;height:1.5px;top:50%;left:0;transform:translateY(-50%)}
+.crosshair::after{height:100%;width:1.5px;left:50%;top:0;transform:translateX(-50%)}
+.crosshair-label{
+  position:absolute;top:-12px;left:22px;
+  font-family:'Share Tech Mono',monospace;font-size:0.5rem;
+  color:var(--text-muted);letter-spacing:0.1em;white-space:nowrap;
+}
+
+/* ===== HEADER ===== */
+.header{
+  position:sticky;top:0;z-index:100;
+  background:var(--bg-header);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border-light);
+  transition:var(--transition-theme);
+}
+.header-inner{
+  max-width:1000px;margin:0 auto;padding:0.9rem 1.5rem;
+  display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;
+}
+.logo-area{display:flex;align-items:baseline;gap:0.6rem}
+.logo-title{
+  font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.7rem;
+  letter-spacing:0.08em;text-transform:uppercase;color:var(--text-primary);
+  line-height:1;transition:color 0.35s;
+}
+.logo-sub{
+  font-family:'Share Tech Mono',monospace;font-size:0.58rem;
+  color:var(--text-dim);letter-spacing:0.25em;text-transform:uppercase;
+  transition:color 0.35s;
+}
+.header-right{display:flex;align-items:center;gap:0.8rem}
+
+.theme-toggle{
+  width:36px;height:36px;background:var(--bg-card);border:1px solid var(--border-light);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1rem;
+  transition:var(--transition-theme);color:var(--text-secondary);
+}
+.theme-toggle:hover{border-color:var(--accent-yellow);color:var(--accent-yellow)}
+
+.reset-box{
+  background:var(--bg-card);border:1px solid var(--border-light);
+  padding:0.45rem 1rem;display:flex;align-items:center;gap:0.7rem;
+  transition:var(--transition-theme);box-shadow:var(--shadow-card);
+}
+.reset-box-accent{width:3px;height:32px;background:var(--accent-yellow);flex-shrink:0}
+.reset-label{
+  font-family:'Rajdhani',sans-serif;font-weight:600;font-size:0.6rem;
+  color:var(--text-dim);letter-spacing:0.2em;text-transform:uppercase;transition:color 0.35s;
+}
+.reset-time{
+  font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.5rem;
+  color:var(--accent-yellow);letter-spacing:0.06em;line-height:1.2;
+}
+.reset-sub{
+  font-family:'Rajdhani',sans-serif;font-weight:500;font-size:0.6rem;
+  color:var(--text-dim);letter-spacing:0.06em;transition:color 0.35s;
+}
+
+/* ===== ACCENT STRIPE ===== */
+.accent-stripe{
+  width:100%;height:3px;
+  background:linear-gradient(90deg,transparent 5%,var(--accent-yellow-bright) 20%,var(--accent-yellow) 50%,var(--accent-yellow-bright) 80%,transparent 95%);
+  opacity:0.5;position:relative;z-index:1;
+}
+
+/* ===== CONTROLS ===== */
+.controls-bar{
+  max-width:1000px;margin:0 auto;padding:0.7rem 1.5rem;
+  display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;
+}
+.controls-label{
+  font-family:'Share Tech Mono',monospace;font-size:0.58rem;
+  color:var(--text-dim);letter-spacing:0.15em;text-transform:uppercase;margin-right:0.2rem;
+  transition:color 0.35s;
+}
+.srv-btn{
+  font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:0.75rem;
+  letter-spacing:0.08em;text-transform:uppercase;padding:0.3rem 0.7rem;
+  background:var(--bg-card);border:1px solid var(--border-light);
+  color:var(--text-dim);cursor:pointer;transition:all 0.2s;
+}
+.srv-btn:hover{border-color:var(--accent-yellow-dim);color:var(--text-secondary)}
+.srv-btn.active{background:var(--accent-yellow-bg);border-color:var(--accent-yellow);color:var(--accent-yellow)}
+
+/* ===== PROGRESS ===== */
+.progress-section{max-width:1000px;margin:0.6rem auto 0;padding:0 1.5rem}
+.progress-row{display:flex;align-items:center;gap:0.8rem;flex-wrap:wrap}
+.progress-label{
+  font-family:'Share Tech Mono',monospace;font-size:0.58rem;
+  color:var(--text-dim);letter-spacing:0.15em;text-transform:uppercase;white-space:nowrap;transition:color 0.35s;
+}
+.progress-track{flex:1;min-width:160px;height:4px;background:var(--border-light);position:relative;overflow:hidden;transition:background 0.35s}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent-yellow-dim),var(--accent-yellow-bright));transition:width 0.5s ease}
+.progress-count{font-family:'Share Tech Mono',monospace;font-size:0.8rem;color:var(--accent-yellow);white-space:nowrap}
+.btn-reset{
+  font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:0.68rem;
+  letter-spacing:0.1em;text-transform:uppercase;padding:0.25rem 0.6rem;
+  background:transparent;border:1px solid var(--border-light);color:var(--text-muted);
+  cursor:pointer;transition:all 0.2s;
+}
+.btn-reset:hover{border-color:#c04040;color:#c04040}
+
+/* ===== MAIN ===== */
+.main{max-width:1000px;margin:0 auto;padding:0.8rem 1.5rem 3rem;position:relative;z-index:1}
+
+/* ===== SECTION ===== */
+.section{margin-bottom:1.6rem}
+.section-header{
+  display:flex;align-items:center;gap:0.6rem;padding:0.4rem 0;margin-bottom:0.5rem;
+  border-bottom:1px solid var(--border-light);cursor:pointer;user-select:none;
+  transition:border-color 0.35s;
+}
+.section-marker{
+  width:10px;height:10px;border:2px solid var(--accent-yellow);
+  transform:rotate(45deg);flex-shrink:0;transition:border-color 0.35s;
+}
+.section-marker.weekly{border-color:var(--accent-orange)}
+.section-marker.other{border-color:var(--accent-green)}
+.section-title{
+  font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1.05rem;
+  letter-spacing:0.12em;text-transform:uppercase;transition:color 0.35s;
+}
+.section-title.daily-t{color:var(--accent-yellow-dim)}
+.section-title.weekly-t{color:var(--accent-orange)}
+.section-title.other-t{color:var(--accent-green)}
+.section-count{
+  font-family:'Share Tech Mono',monospace;font-size:0.6rem;
+  color:var(--text-muted);letter-spacing:0.08em;margin-left:auto;transition:color 0.35s;
+}
+.collapse-arrow{
+  font-family:'Share Tech Mono',monospace;font-size:0.6rem;
+  color:var(--text-muted);transition:transform 0.3s,color 0.35s;
+}
+.section.collapsed .task-list{display:none}
+.section.collapsed .collapse-arrow{transform:rotate(-90deg)}
+
+/* ===== TASK ===== */
+.task-list{display:flex;flex-direction:column;gap:3px}
+.task{
+  display:flex;align-items:stretch;background:var(--bg-card);
+  border:1px solid var(--border-light);position:relative;overflow:hidden;
+  transition:var(--transition-theme),transform 0.15s;box-shadow:var(--shadow-card);
+}
+.task:hover{background:var(--bg-card-hover);border-color:var(--border-medium);box-shadow:var(--shadow-card-hover)}
+.task.done{opacity:0.4}
+.task.done .task-name{text-decoration:line-through;text-decoration-color:var(--text-muted)}
+.task-bar{width:3px;flex-shrink:0}
+.task-bar.bar-daily{background:var(--accent-yellow)}
+.task-bar.bar-weekly{background:var(--accent-orange)}
+.task-bar.bar-other{background:var(--accent-green)}
+.task.done .task-bar{opacity:0.3}
+.task-check{
+  width:40px;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;flex-shrink:0;border-right:1px solid var(--border-light);
+  transition:background 0.2s,border-color 0.35s;
+}
+.task-check:hover{background:var(--accent-yellow-bg)}
+.chk{
+  width:16px;height:16px;border:2px solid var(--border-medium);
+  display:flex;align-items:center;justify-content:center;
+  transition:all 0.2s;pointer-events:none;
+}
+.task.done .chk{border-color:var(--accent-yellow);background:var(--accent-yellow)}
+.task.done .chk::after{content:'✓';color:#1a1a1a;font-size:0.65rem;font-weight:800;line-height:1}
+.task-body{flex:1;padding:0.5rem 0.7rem;min-width:0;cursor:pointer}
+.task-top{display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap}
+.task-name{
+  font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:0.92rem;
+  letter-spacing:0.04em;color:var(--text-primary);transition:color 0.35s;
+}
+.task-name a{color:var(--accent-blue);text-decoration:none;border-bottom:1px solid transparent;transition:border-color 0.2s}
+.task-name a:hover{border-bottom-color:var(--accent-blue)}
+.tag{
+  font-family:'Share Tech Mono',monospace;font-size:0.5rem;letter-spacing:0.1em;
+  text-transform:uppercase;padding:1px 5px;border:1px solid;line-height:1.6;
+  transition:color 0.35s,border-color 0.35s;
+}
+.tag-daily{color:var(--accent-yellow-dim);border-color:var(--accent-yellow-dim)}
+.tag-weekly{color:var(--accent-orange);border-color:var(--accent-orange)}
+.tag-other{color:var(--accent-green);border-color:var(--accent-green)}
+.tag-link{color:var(--accent-blue);border-color:var(--accent-blue);cursor:pointer;transition:background 0.2s}
+.tag-link:hover{background:var(--accent-yellow-bg)}
+.task-desc{font-size:0.73rem;color:var(--text-secondary);margin-top:0.2rem;line-height:1.5;font-weight:400;transition:color 0.35s}
+
+/* ===== NOTES ===== */
+.notes-box{
+  margin-top:1.2rem;background:var(--bg-card);border:1px solid var(--border-light);
+  padding:0.8rem 1rem;position:relative;box-shadow:var(--shadow-card);transition:var(--transition-theme);
+}
+.notes-box::before{content:'';position:absolute;top:0;left:0;width:100%;height:2px;background:linear-gradient(90deg,var(--accent-yellow),transparent 70%)}
+.notes-title{
+  font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.8rem;
+  color:var(--text-dim);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:0.4rem;transition:color 0.35s;
+}
+.notes-list{list-style:none;display:flex;flex-direction:column;gap:0.25rem}
+.notes-list li{font-size:0.68rem;color:var(--text-dim);line-height:1.5;padding-left:0.9rem;position:relative;transition:color 0.35s}
+.notes-list li::before{content:'›';position:absolute;left:0;color:var(--accent-yellow-dim);font-weight:700}
+
+.footer{
+  text-align:center;padding:1.5rem;
+  font-family:'Share Tech Mono',monospace;font-size:0.55rem;
+  color:var(--text-muted);letter-spacing:0.15em;transition:color 0.35s;
+}
+
+@media(max-width:640px){
+  .header-inner{flex-direction:column;align-items:flex-start;padding:0.7rem 1rem}
+  .header-right{width:100%;justify-content:space-between}
+  .reset-box{flex:1}
+  .controls-bar,.progress-section{padding-left:1rem;padding-right:1rem}
+  .main{padding:0.6rem 1rem 2.5rem}
+  .task-name{font-size:0.85rem}
+  .task-desc{font-size:0.68rem}
+  .logo-title{font-size:1.4rem}
+}
+</style>
+</head>
+<body>
+
+<!-- Decorative crosshairs -->
+<div class="crosshair" style="top:14%;left:8%"><span class="crosshair-label">AP44</span></div>
+<div class="crosshair" style="top:18%;right:12%"></div>
+<div class="crosshair" style="top:55%;left:15%"><span class="crosshair-label">AP44</span></div>
+<div class="crosshair" style="top:60%;right:8%"></div>
+<div class="crosshair" style="top:82%;left:22%"></div>
+
+<header class="header">
+  <div class="header-inner">
+    <div class="logo-area">
+      <div>
+        <div class="logo-title">ARKNIGHTS ENDFIELD</div>
+        <div class="logo-sub">Operations Tracker</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">☽</button>
+      <div class="reset-box">
+        <div class="reset-box-accent"></div>
+        <div class="reset-box-content">
+          <div class="reset-label">Daily Reset In</div>
+          <div class="reset-time" id="resetTimer">--:--:--</div>
+          <div class="reset-sub" id="resetInfo">Loading...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="accent-stripe"></div>
+
+<div class="controls-bar">
+  <span class="controls-label">Server ›</span>
+  <button class="srv-btn" data-server="asia" data-label="Asia (GMT+8) — Reset 04:00 Server">Asia</button>
+  <button class="srv-btn" data-server="na" data-label="NA/EU (EST) — Reset 04:00 Server">NA/EU</button>
+  <button class="srv-btn active" data-server="frit" data-label="France/Italy — Reset 10:00 Local">FR/IT</button>
+  <button class="srv-btn" data-server="bg" data-label="Bulgaria — Reset 11:00 Local">BG</button>
+</div>
+
+<div class="progress-section">
+  <div class="progress-row">
+    <span class="progress-label">Progress</span>
+    <div class="progress-track"><div class="progress-fill" id="progressBar" style="width:0%"></div></div>
+    <span class="progress-count" id="progressCount">0 / 0</span>
+    <button class="btn-reset" id="btnResetChecks" title="Uncheck all tasks">↺ Reset</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="section" id="sectionDaily">
+    <div class="section-header" onclick="toggleSection('sectionDaily')">
+      <div class="section-marker"></div>
+      <div class="section-title daily-t">Daily Operations</div>
+      <span class="section-count" id="dailyCount"></span>
+      <span class="collapse-arrow">▼</span>
+    </div>
+    <div class="task-list" id="dailyList"></div>
+  </div>
+
+  <div class="section" id="sectionWeekly">
+    <div class="section-header" onclick="toggleSection('sectionWeekly')">
+      <div class="section-marker weekly"></div>
+      <div class="section-title weekly-t">Weekly Operations</div>
+      <span class="section-count" id="weeklyCount"></span>
+      <span class="collapse-arrow">▼</span>
+    </div>
+    <div class="task-list" id="weeklyList"></div>
+  </div>
+
+  <div class="section" id="sectionOther">
+    <div class="section-header" onclick="toggleSection('sectionOther')">
+      <div class="section-marker other"></div>
+      <div class="section-title other-t">Recurring Operations</div>
+      <span class="section-count" id="otherCount"></span>
+      <span class="collapse-arrow">▼</span>
+    </div>
+    <div class="task-list" id="otherList"></div>
+  </div>
+
+  <div class="notes-box">
+    <div class="notes-title">Intel Notes</div>
+    <ul class="notes-list">
+      <li>Daily reset: 04:00 server time (10:00 AM France/Italy, 11:00 AM Bulgaria)</li>
+      <li>Emergency Warning Terminal: Complete Auto Defense to make the bonus permanent — skip daily after that</li>
+      <li>Rare Growths/Ores: +2 per day, cap at 8 — collect every 4 days for efficiency</li>
+      <li>Environment Monitoring: 1 job refreshes every 2 days, max 3 slots at Lvl 2 terminal</li>
+      <li>Seed Plots: Harvest time varies depending on plant type and fertilizer used</li>
+    </ul>
+  </div>
+</div>
+
+<footer class="footer">ARKNIGHTS: ENDFIELD — OPERATIONS TRACKER v2.0</footer>
+
+<script>
+const DAILY_TASKS=[
+  {id:'web_checkin',name:'Web Check-In',desc:'Claim daily rewards on the official sign-in page.',link:'https://game.skport.com/endfield/sign-in'},
+  {id:'game_signin',name:'Game Sign-In',desc:'Log in and collect daily login rewards from ongoing events.'},
+  {id:'op_manual',name:'Operational Manual',desc:'Complete short daily missions for quick rewards. Also gives Protocol Pass EXP.'},
+  {id:'elastic_goods',name:'Elastic Goods',desc:'Buy Elastic Goods at Regional Stock Redistribution and sell on friends\' Dijang Ship. Prices reset daily — buy low and sell high.'},
+  {id:'give_gifts',name:'Give Gifts',desc:'Gift operators on your Dijang Ship to increase their trust level.'},
+  {id:'prod_assist',name:'Production Assist',desc:'Send up to 5 boosts per day to friends\' ships for bonus credits.'},
+  {id:'clue_exchange',name:'Clue Exchange',desc:'Exchange clues up to 5 times daily for bonus credits.'},
+  {id:'dijang_mats',name:'Dijang Materials',desc:'Harvest grown plants at the Growth Chamber and replant seeds for upgrade materials.'},
+  {id:'credit_store',name:'Credit Store',desc:'Check the shop for the daily credit rewards and spend the credits.'},
+  {id:'recycling',name:'Recycling Stations',desc:'Collect refilled aerospace materials for Dijang Ship upgrades. Optional if ship is already max.'},
+  {id:'pack_deliver',name:'Pack & Deliver',desc:'Pack your materials and deliver or transfer jobs to others for stock bills. Accept up to 3 deliveries from other players daily.'},
+  {id:'outpost_trade',name:'Outpost Trade',desc:'Sell materials to region outposts for stock bills. Outpost savings refill over time — sell daily for best results.'},
+  {id:'ewt',name:'Emergency Warning Terminal',desc:'Complete tower defense missions at outpost settlements for a 24h stock bill bonus. Complete Auto Defense to make it permanent.'},
+  {id:'seed_plots',name:'Seed Plots',desc:'Harvest seed plots near outposts. Timers vary depending on plant type and fertilizer used.'},
+  {id:'sanity',name:'Sanity Spend',desc:'Spend your stamina before it caps. It refills passively over time — don\'t let it overflow.'},
+  {id:'protocol_pass',name:'Protocol Pass',desc:'New missions added weekly. Daily Operational Manual clears also grant Protocol Pass EXP.'},
+];
+
+const WEEKLY_TASKS=[
+  {id:'staple_goods',name:'Staple Goods',desc:'Buy weekly restocked items from each region\'s Stock Redistribution shop using stock bills.'},
+  {id:'weekly_routine',name:'Weekly Routine',desc:'Complete weekly missions at the Event Center\'s Weekly Routine tab for rewards.'},
+];
+
+const OTHER_TASKS=[
+  {id:'env_monitor',name:'Environment Monitoring',desc:'1 job refreshes every 2 days. Max 3 slots at Lvl 2 terminal. No refresh if no empty slots or completed jobs remain.',cycle:'Every 2 days'},
+  {id:'rare_growths',name:'Rare Growths / Ores',desc:'Collect rare materials from map locations. +2 per day, caps at 8. Recommend collecting every 4 days.',cycle:'Every 4 days'},
+];
+
+const STATE_KEY='endfield_tracker_v2';
+let state=loadState();
+
+function defaultState(){return{server:'frit',checks:{},lastResetDate:null,lastWeeklyReset:null,theme:'light'}}
+function loadState(){try{const s=localStorage.getItem(STATE_KEY);return s?{...defaultState(),...JSON.parse(s)}:defaultState()}catch(e){return defaultState()}}
+function saveState(){try{localStorage.setItem(STATE_KEY,JSON.stringify(state))}catch(e){}}
+
+// THEME
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme',t);
+  document.getElementById('themeToggle').textContent=t==='light'?'☽':'☀';
+  state.theme=t;saveState();
+}
+document.getElementById('themeToggle').addEventListener('click',()=>{applyTheme(state.theme==='light'?'dark':'light')});
+applyTheme(state.theme);
+
+// SERVER TIMER — FIXED: each server key maps to a UTC reset hour
+const SERVER_RESET_UTC={asia:20,na:9,frit:9,bg:9};
+
+function getNextReset(srv){
+  const h=SERVER_RESET_UTC[srv]??9;
+  const now=new Date();
+  const today=new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate(),h,0,0));
+  return now>=today?new Date(today.getTime()+86400000):today;
+}
+function getResetCycleDate(srv){
+  const h=SERVER_RESET_UTC[srv]??9;
+  const now=new Date();
+  const today=new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate(),h,0,0));
+  const start=now>=today?today:new Date(today.getTime()-86400000);
+  return start.toISOString().slice(0,10);
+}
+function updateTimer(){
+  const next=getNextReset(state.server);
+  const diff=next-new Date();
+  if(diff<=0){checkAutoReset();return}
+  const h=String(Math.floor(diff/3600000)).padStart(2,'0');
+  const m=String(Math.floor((diff%3600000)/60000)).padStart(2,'0');
+  const s=String(Math.floor((diff%60000)/1000)).padStart(2,'0');
+  document.getElementById('resetTimer').textContent=`${h}:${m}:${s}`;
+  const btn=document.querySelector('.srv-btn.active');
+  document.getElementById('resetInfo').textContent=btn?btn.dataset.label:'';
+}
+function checkAutoReset(){
+  const cycle=getResetCycleDate(state.server);
+  if(state.lastResetDate!==cycle){
+    DAILY_TASKS.forEach(t=>{state.checks[t.id]=false});
+    const now=new Date();
+    if(now.getUTCDay()===1&&state.lastWeeklyReset!==cycle){
+      WEEKLY_TASKS.forEach(t=>{state.checks[t.id]=false});
+      state.lastWeeklyReset=cycle;
+    }
+    state.lastResetDate=cycle;saveState();renderAll();
+  }
+}
+
+// RENDER
+function renderTask(task,type){
+  const done=!!state.checks[task.id];
+  const bar=type==='daily'?'bar-daily':type==='weekly'?'bar-weekly':'bar-other';
+  const tag=type==='daily'?'tag-daily':type==='weekly'?'tag-weekly':'tag-other';
+  const label=type==='daily'?'Daily':type==='weekly'?'Weekly':(task.cycle||'Recurring');
+  let nm=task.link?`<a href="${task.link}" target="_blank" rel="noopener">${task.name}</a>`:task.name;
+  let lk=task.link?`<span class="tag tag-link" onclick="event.stopPropagation();window.open('${task.link}','_blank')">Open ↗</span>`:'';
+  return `<div class="task ${done?'done':''}" data-id="${task.id}">
+    <div class="task-bar ${bar}"></div>
+    <div class="task-check" onclick="toggleTask('${task.id}')"><div class="chk"></div></div>
+    <div class="task-body" onclick="toggleTask('${task.id}')">
+      <div class="task-top"><span class="task-name">${nm}</span><span class="tag ${tag}">${label}</span>${lk}</div>
+      <div class="task-desc">${task.desc}</div>
+    </div></div>`;
+}
+function renderAll(){
+  document.getElementById('dailyList').innerHTML=DAILY_TASKS.map(t=>renderTask(t,'daily')).join('');
+  document.getElementById('weeklyList').innerHTML=WEEKLY_TASKS.map(t=>renderTask(t,'weekly')).join('');
+  document.getElementById('otherList').innerHTML=OTHER_TASKS.map(t=>renderTask(t,'other')).join('');
+  updateCounts();
+}
+function updateCounts(){
+  const dD=DAILY_TASKS.filter(t=>state.checks[t.id]).length,dT=DAILY_TASKS.length;
+  const wD=WEEKLY_TASKS.filter(t=>state.checks[t.id]).length,wT=WEEKLY_TASKS.length;
+  const oD=OTHER_TASKS.filter(t=>state.checks[t.id]).length,oT=OTHER_TASKS.length;
+  document.getElementById('dailyCount').textContent=`${dD}/${dT}`;
+  document.getElementById('weeklyCount').textContent=`${wD}/${wT}`;
+  document.getElementById('otherCount').textContent=`${oD}/${oT}`;
+  const all=dD+wD+oD,total=dT+wT+oT,pct=total>0?(all/total*100):0;
+  document.getElementById('progressBar').style.width=pct+'%';
+  document.getElementById('progressCount').textContent=`${all} / ${total}`;
+}
+function toggleTask(id){state.checks[id]=!state.checks[id];saveState();renderAll()}
+function toggleSection(id){document.getElementById(id).classList.toggle('collapsed')}
+
+// SERVER BUTTONS
+document.querySelectorAll('.srv-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.srv-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    state.server=btn.dataset.server;
+    saveState();checkAutoReset();updateTimer();
+  });
+});
+
+// RESET
+document.getElementById('btnResetChecks').addEventListener('click',()=>{
+  if(!confirm('Uncheck all tasks?'))return;
+  [...DAILY_TASKS,...WEEKLY_TASKS,...OTHER_TASKS].forEach(t=>{state.checks[t.id]=false});
+  saveState();renderAll();
+});
+
+// INIT
+document.querySelectorAll('.srv-btn').forEach(btn=>{btn.classList.toggle('active',btn.dataset.server===state.server)});
+checkAutoReset();renderAll();updateTimer();
+setInterval(updateTimer,1000);setInterval(checkAutoReset,60000);
+</script>
+</body>
+</html>
