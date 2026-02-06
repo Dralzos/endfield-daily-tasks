@@ -1,6 +1,8 @@
 Arknights Endfield - Daily Checklist Tracker
 A simple task checklist for Arknights Endfield to help you stay on top of daily, weekly, and recurring in-game activities.
 
+live: https://dralzos.github.io/endfield-daily-tasks/
+
 Features
 
 - 16 daily, 2 weekly, and 2 recurring tasks with descriptions
